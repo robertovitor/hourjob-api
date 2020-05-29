@@ -31,28 +31,28 @@ import lombok.Data;
 @RequestMapping("/vaga")
 @Data
 public class VagaController {
-	
+
 	@Autowired
 	private VagaService vagaService;
-	
+
 	@Autowired
 	EmpregadorRepository empregadorRepository;
-	
-	
+
+
 	@PostMapping
 	@Transactional
 	public ResponseEntity<VagaDto> cadastrar(@RequestBody @Valid VagaForm form, UriComponentsBuilder uriBuilder) {
-		
+
 		Vaga vaga = vagaService.salvar(form,empregadorRepository);
-		
+
 		URI uri = uriBuilder.path("/vaga/{id}").buildAndExpand(vaga.getId()).toUri();
 		return ResponseEntity.created(uri).body(new VagaDto(vaga));
 	}
-	
+
 	@GetMapping
-	public Page<VagaDto> lista(@RequestParam(required = false) long id, 
+	public Page<VagaDto> lista(@RequestParam(required = false) Long id,
 			@PageableDefault(sort = "dataCriacao", direction = Direction.DESC, page = 0, size = 10) Pageable paginacao) {
-		
+
 			return vagaService.listar(id,paginacao);
 	}
 }

@@ -1,13 +1,16 @@
 # datasource
-spring:
-  datasource:
-   url: jdbc:postgresql://localhost:5432/hourjob
-   username: postgres
-   password: root
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: update
-jwt:
-  expiration: 3600
-  secret:  xxxx
+#spring:
+#  datasource:
+     # url: jdbc:postgresql://localhost:5432/hourjob
+     # url: jdbc:postgresql://google/hourjob?cloudSqlInstance=hourjob:us-east1:hourjob&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=postgres&password=root
+#     username: postgres
+ #    password: root
+#  jpa:
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    hibernate:
+#      ddl-auto: update
+#jwt:
+#  expiration: 3600
+#  secret:  xxxx
+
+

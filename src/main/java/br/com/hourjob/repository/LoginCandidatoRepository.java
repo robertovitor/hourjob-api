@@ -1,14 +1,14 @@
 package br.com.hourjob.repository;
 
-import java.util.Optional;
-
+import br.com.hourjob.model.Candidato;
+import br.com.hourjob.model.LoginCandidato;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import br.com.hourjob.model.LoginCandidato;
+import java.util.Optional;
 
 
 public interface LoginCandidatoRepository  extends JpaRepository<LoginCandidato, Long> {
 
-	Optional<LoginCandidato> findByCandidato(long id);
+	Optional<LoginCandidato> findByCandidato(Candidato candidato);
 	
 }

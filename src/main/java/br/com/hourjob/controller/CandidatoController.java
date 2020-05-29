@@ -46,7 +46,7 @@ public class CandidatoController {
 	}
 	
 	@GetMapping
-	public Page<CandidatoDto> lista(@RequestParam(required = false) long idQuali, 
+	public Page<CandidatoDto> lista(@RequestParam(required = false) Long idQuali,
 			@PageableDefault(direction = Direction.DESC, page = 0, size = 10) Pageable paginacao) {
 		
 			return usuarioService.listar(idQuali,paginacao);

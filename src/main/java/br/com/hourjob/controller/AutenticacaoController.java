@@ -1,7 +1,8 @@
 package br.com.hourjob.controller;
 
-import javax.validation.Valid;
-
+import br.com.hourjob.controller.form.LoginForm;
+import br.com.hourjob.dto.TokenDto;
+import br.com.hourjob.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,13 +14,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
-import br.com.hourjob.controller.form.LoginForm;
-import br.com.hourjob.dto.TokenDto;
-import br.com.hourjob.service.TokenService;
+import javax.validation.Valid;
 
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/auth")
 public class AutenticacaoController {
 	
 	@Autowired
@@ -43,5 +44,10 @@ public class AutenticacaoController {
 		} catch (AuthenticationException e) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
+	}
+
+	@GetMapping("/encrypt/{pass}")
+	public String getEncrypt(@PathVariable(name = "pass") String pass) {
+		return tokenService.getEncrypt(pass);
 	}
 }
