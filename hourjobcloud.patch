@@ -1,0 +1,1215 @@
+Index: mvnw.cmd
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- mvnw.cmd	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ mvnw.cmd	(date 1590361785046)
+@@ -7,7 +7,7 @@
+ @REM "License"); you may not use this file except in compliance
+ @REM with the License.  You may obtain a copy of the License at
+ @REM
+-@REM    https://www.apache.org/licenses/LICENSE-2.0
++@REM    http://www.apache.org/licenses/LICENSE-2.0
+ @REM
+ @REM Unless required by applicable law or agreed to in writing,
+ @REM software distributed under the License is distributed on an
+Index: src/main/java/br/com/hourjob/filter/AutenticacaoTokenFilter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/filter/AutenticacaoTokenFilter.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/filter/AutenticacaoTokenFilter.java	(date 1589975292289)
+@@ -1,71 +1,68 @@
+ package br.com.hourjob.filter;
+ 
+-import java.io.IOException;
++import br.com.hourjob.model.LoginCandidato;
++import br.com.hourjob.repository.LoginCandidatoRepository;
++import br.com.hourjob.service.TokenService;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.context.SecurityContextHolder;
++import org.springframework.web.filter.OncePerRequestFilter;
+ 
+ import javax.servlet.FilterChain;
+ import javax.servlet.ServletException;
+ import javax.servlet.http.HttpServletRequest;
+ import javax.servlet.http.HttpServletResponse;
+-
+-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+-import org.springframework.security.core.context.SecurityContextHolder;
+-import org.springframework.web.filter.OncePerRequestFilter;
+-
+-import br.com.hourjob.model.LoginCandidato;
+-import br.com.hourjob.repository.LoginCandidatoRepository;
+-import br.com.hourjob.service.TokenService;
++import java.io.IOException;
+ 
+ public class AutenticacaoTokenFilter extends OncePerRequestFilter {
+-	
+-	private TokenService tokenService;
++
++  private TokenService tokenService;
+ 	private LoginCandidatoRepository loginCandidatoRepository;
+-	
++
+ 
+ 	public AutenticacaoTokenFilter(TokenService tokenService, LoginCandidatoRepository loginCandidatoRepository) {
+ 		this.tokenService = tokenService;
+ 		this.loginCandidatoRepository = loginCandidatoRepository;
+ 	}
+ 
++
+ 	@Override
+ 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+ 			throws ServletException, IOException {
+-		
+-		
++
++
+ 		String token = recuperarToken(request);
+ 		boolean valido = tokenService.isValid(token);
+-		
++
+ 		if(valido) {
+ 			autenticarCliente(token);
+ 		}
+-		
++
+ 		filterChain.doFilter(request, response);
+-		
++
+ 	}
+ 
++
+ 	private void autenticarCliente(String token) {
+-		
++
+ 		Long idUsuario = tokenService.getIdUsuario(token);
+ 		LoginCandidato usuario = loginCandidatoRepository.findById(idUsuario).get();
+-		
++
+ 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+-		
++
+ 		SecurityContextHolder.getContext().setAuthentication(auth);
+-		
+-		
+-		
+ 	}
+ 
+ 	private String recuperarToken(HttpServletRequest request) {
+-		
++
+ 		String token = request.getHeader("Authorization");
+-		
++
+ 		if(token == null || token.isEmpty() || !token.startsWith("Bearer ")) {
+ 			return null;
+ 		}
+-		
++
+ 		return token.substring(7, token.length());
+ 	}
+-	
+-	
++
++
+ 
+ }
+Index: src/main/java/br/com/hourjob/model/LoginCandidato.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/LoginCandidato.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/model/LoginCandidato.java	(date 1589849570086)
+@@ -8,6 +8,10 @@
+ import javax.persistence.Id;
+ import javax.persistence.JoinColumn;
+ import javax.persistence.OneToOne;
++import java.util.ArrayList;
++import java.util.List;
++import javax.persistence.FetchType;
++import javax.persistence.ManyToMany;
+ 
+ import org.springframework.security.core.GrantedAuthority;
+ import org.springframework.security.core.userdetails.UserDetails;
+@@ -15,7 +19,6 @@
+ import lombok.Data;
+ 
+ @Entity
+-@Data
+ public class LoginCandidato implements UserDetails {
+ 	
+ 	/**
+@@ -29,14 +32,19 @@
+ 	@OneToOne @JoinColumn(unique = true)
+ 	private Candidato candidato;
+ 	private String senha;
++
++	@ManyToMany(fetch = FetchType.EAGER)
++	private List<Perfil> perfis = new ArrayList<>();
++
+ 	@Override
+ 	public Collection<? extends GrantedAuthority> getAuthorities() {
+ 		// TODO Auto-generated method stub
+-		return null;
++		return perfis;
++
+ 	}
+ 	@Override
+ 	public String getPassword() {
+-		return this.getPassword();
++		return this.senha;
+ 	}
+ 	@Override
+ 	public String getUsername() {
+@@ -58,5 +66,8 @@
+ 	public boolean isEnabled() {
+ 		return true;
+ 	}
+-	
++	public long getId() {
++		return this.id;
++	}
++
+ }
+Index: src/main/java/br/com/hourjob/service/AutenticacaoService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/service/AutenticacaoService.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/service/AutenticacaoService.java	(date 1589849942060)
+@@ -1,16 +1,15 @@
+ package br.com.hourjob.service;
+ 
+-import java.util.Optional;
+-
++import br.com.hourjob.model.Candidato;
++import br.com.hourjob.model.LoginCandidato;
++import br.com.hourjob.repository.LoginCandidatoRepository;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.security.core.userdetails.UserDetails;
+ import org.springframework.security.core.userdetails.UserDetailsService;
+ import org.springframework.security.core.userdetails.UsernameNotFoundException;
+ import org.springframework.stereotype.Service;
+ 
+-import br.com.hourjob.model.Candidato;
+-import br.com.hourjob.model.LoginCandidato;
+-import br.com.hourjob.repository.LoginCandidatoRepository;
++import java.util.Optional;
+ 
+ @Service
+ public class AutenticacaoService implements UserDetailsService {
+@@ -28,7 +27,8 @@
+ 		Optional<LoginCandidato> loginCandidato  = null; 
+ 		
+ 		if(candidato.isPresent()) {
+-			loginCandidato = loginCandidatoRepository.findByCandidato(candidato.get().getId());
++			loginCandidato = loginCandidatoRepository.findByCandidato(candidato.get());
++
+ 		}
+ 		
+ 		if (loginCandidato.isPresent()) {
+Index: src/main/java/br/com/hourjob/service/TokenService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/service/TokenService.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/service/TokenService.java	(date 1589849991526)
+@@ -1,15 +1,15 @@
+ package br.com.hourjob.service;
+ 
+-import java.util.Date;
+-
+-import org.springframework.beans.factory.annotation.Value;
+-import org.springframework.security.core.Authentication;
+-import org.springframework.stereotype.Service;
+-
+ import br.com.hourjob.model.LoginCandidato;
+ import io.jsonwebtoken.Claims;
+ import io.jsonwebtoken.Jwts;
+ import io.jsonwebtoken.SignatureAlgorithm;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.security.core.Authentication;
++import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
++import org.springframework.stereotype.Service;
++
++import java.util.Date;
+ 
+ @Service
+ public class TokenService {
+@@ -47,4 +47,11 @@
+ 		
+ 	}
+ 
++
++	public String getEncrypt(String pass) {
++
++		return new BCryptPasswordEncoder().encode(pass);
++
++	}
++
+ }
+Index: src/main/java/br/com/hourjob/security/SecurityConfiguration.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/security/SecurityConfiguration.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/security/SecurityConfiguration.java	(date 1590491107513)
+@@ -22,46 +22,52 @@
+ @Configuration
+ @EnableWebSecurity
+ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+-	
++
+ 	@Autowired
+ 	AutenticacaoService autenticacaoService;
+-	
++
+ 	@Autowired
+ 	private TokenService tokenService;
+-	
++
+ 	@Autowired
+ 	private LoginCandidatoRepository loginCandidatoRepository;
+ 
+-	
++
+ 	//COnfigurações de autenticacao
+ 	@Override
+ 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+ 		auth.userDetailsService(autenticacaoService).passwordEncoder(new BCryptPasswordEncoder());
+ 	}
+-	
++
+ 	//Configuracao de urls
+ 	@Override
+ 	protected void configure(HttpSecurity http) throws Exception {
+ 		http.authorizeRequests()
+-		.antMatchers("/vaga").permitAll()
+-		.antMatchers("/empregador").permitAll()
+-		.antMatchers("/candidato").permitAll()
++		.antMatchers(HttpMethod.GET,"/vaga").permitAll()
++      .antMatchers(HttpMethod.GET,"/").permitAll()
++
++      .antMatchers(HttpMethod.GET,"/empregador").permitAll()
++		.antMatchers(HttpMethod.GET,"/candidato").permitAll()
++		.antMatchers("/auth/encrypt/**").permitAll()
+ 		.antMatchers("/swagger/**").permitAll()
+ 		.antMatchers(HttpMethod.POST, "/auth").permitAll()
+-		.anyRequest().authenticated()
++    .antMatchers(HttpMethod.POST, "/vaga").permitAll()
++    .anyRequest().authenticated()
+ 		.and().csrf().disable()
+ 		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+ 		.and().addFilterBefore(new AutenticacaoTokenFilter(tokenService,loginCandidatoRepository), UsernamePasswordAuthenticationFilter.class);
+-	}
+-	
++  }
++
++
+ 	@Override
+ 	@Bean
+ 	protected AuthenticationManager authenticationManager() throws Exception {
+ 		return super.authenticationManager();
+ 	}
+-	
++
+ 	//Configuracoes de arquivos estatticos
+ 	@Override
+ 	public void configure(WebSecurity web) throws Exception {
++		web.ignoring().antMatchers("/v2/api-docs", "/configuration/ui", "/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**");
+ 	}
+ }
+Index: src/main/java/br/com/hourjob/service/EmpregadorService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/service/EmpregadorService.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/service/EmpregadorService.java	(date 1589975819863)
+@@ -4,7 +4,11 @@
+ 
+ import javax.validation.Valid;
+ 
++import br.com.hourjob.dto.CandidatoDto;
++import br.com.hourjob.model.Candidato;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.data.domain.Page;
++import org.springframework.data.domain.Pageable;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.stereotype.Service;
+ 
+@@ -15,12 +19,12 @@
+ 
+ @Service
+ public class EmpregadorService {
+-	
++
+ 	@Autowired
+ 	private EmpregadorRepository empregadorRepository;
+-	
++
+ 	public Empregador salvar(@Valid EmpregadorForm form) {
+-		
++
+ 		return empregadorRepository.save(form.toEmpregador());
+ 	}
+ 
+@@ -31,9 +35,19 @@
+ 			empregador.setPontuacao(nota);
+ 			return ResponseEntity.ok(new EmpregadorDto(empregador));
+ 		}
+-		
+-		return ResponseEntity.notFound().build();	
++
++		return ResponseEntity.notFound().build();
+ 	}
+ 
++  public Page<EmpregadorDto> listar(Long id, Pageable paginacao) {
++    if (id == null) {
++      Page<Empregador> empregador = empregadorRepository.findAll(paginacao);
++      return EmpregadorDto.converter(empregador);
++    }
++    else {
++      return null;
++    }
++  }
++
+ 
+ }
+Index: src/main/java/br/com/hourjob/controller/VagaController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/controller/VagaController.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/controller/VagaController.java	(date 1589890575149)
+@@ -31,28 +31,28 @@
+ @RequestMapping("/vaga")
+ @Data
+ public class VagaController {
+-	
++
+ 	@Autowired
+ 	private VagaService vagaService;
+-	
++
+ 	@Autowired
+ 	EmpregadorRepository empregadorRepository;
+-	
+-	
++
++
+ 	@PostMapping
+ 	@Transactional
+ 	public ResponseEntity<VagaDto> cadastrar(@RequestBody @Valid VagaForm form, UriComponentsBuilder uriBuilder) {
+-		
++
+ 		Vaga vaga = vagaService.salvar(form,empregadorRepository);
+-		
++
+ 		URI uri = uriBuilder.path("/vaga/{id}").buildAndExpand(vaga.getId()).toUri();
+ 		return ResponseEntity.created(uri).body(new VagaDto(vaga));
+ 	}
+-	
++
+ 	@GetMapping
+-	public Page<VagaDto> lista(@RequestParam(required = false) long id, 
++	public Page<VagaDto> lista(@RequestParam(required = false) Long id,
+ 			@PageableDefault(sort = "dataCriacao", direction = Direction.DESC, page = 0, size = 10) Pageable paginacao) {
+-		
++
+ 			return vagaService.listar(id,paginacao);
+ 	}
+-}
+\ No newline at end of file
++}
+Index: src/main/java/br/com/hourjob/controller/EmpregadorController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/controller/EmpregadorController.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/controller/EmpregadorController.java	(date 1589975819852)
+@@ -5,14 +5,14 @@
+ import javax.transaction.Transactional;
+ import javax.validation.Valid;
+ 
++import br.com.hourjob.dto.CandidatoDto;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.data.domain.Page;
++import org.springframework.data.domain.Pageable;
++import org.springframework.data.domain.Sort;
++import org.springframework.data.web.PageableDefault;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.PathVariable;
+-import org.springframework.web.bind.annotation.PostMapping;
+-import org.springframework.web.bind.annotation.PutMapping;
+-import org.springframework.web.bind.annotation.RequestBody;
+-import org.springframework.web.bind.annotation.RequestMapping;
+-import org.springframework.web.bind.annotation.RestController;
++import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+ import br.com.hourjob.controller.form.EmpregadorForm;
+@@ -22,27 +22,34 @@
+ import lombok.Data;
+ 
+ @RestController
+-@RequestMapping("/empregado")
++@RequestMapping("/empregador")
+ @Data
+ public class EmpregadorController {
+-	
++
+ 	@Autowired
+ 	private EmpregadorService empregadorService;
+-	
++
+ 	@PostMapping
+ 	@Transactional
+ 	public ResponseEntity<EmpregadorDto> cadastrar(@RequestBody @Valid EmpregadorForm form, UriComponentsBuilder uriBuilder) {
+-		
++
+ 		Empregador empregador = empregadorService.salvar(form);
+-		
++
+ 		URI uri = uriBuilder.path("/empregador/{id}").buildAndExpand(empregador.getId()).toUri();
+ 		return ResponseEntity.created(uri).body(new EmpregadorDto(empregador));
+ 	}
+-	
++
+ 	@PutMapping("/avaliacao/{id}/{nota}")
+ 	@Transactional
+ 	public ResponseEntity<EmpregadorDto> atualizar(@PathVariable Long id, int nota) {
+ 		return empregadorService.avaliar(id,nota);
+ 	}
+-	
+-}
+\ No newline at end of file
++
++  @GetMapping
++  public Page<EmpregadorDto> lista(@RequestParam(required = false) Long idQuali,
++                                  @PageableDefault(direction = Sort.Direction.DESC, page = 0, size = 10) Pageable paginacao) {
++
++    return empregadorService.listar(idQuali,paginacao);
++  }
++
++}
+Index: src/main/java/br/com/hourjob/controller/CandidatoController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/controller/CandidatoController.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/controller/CandidatoController.java	(date 1589807076788)
+@@ -46,7 +46,7 @@
+ 	}
+ 	
+ 	@GetMapping
+-	public Page<CandidatoDto> lista(@RequestParam(required = false) long idQuali, 
++	public Page<CandidatoDto> lista(@RequestParam(required = false) Long idQuali,
+ 			@PageableDefault(direction = Direction.DESC, page = 0, size = 10) Pageable paginacao) {
+ 		
+ 			return usuarioService.listar(idQuali,paginacao);
+Index: src/main/java/br/com/hourjob/controller/AutenticacaoController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/controller/AutenticacaoController.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/controller/AutenticacaoController.java	(date 1589849292074)
+@@ -1,7 +1,8 @@
+ package br.com.hourjob.controller;
+ 
+-import javax.validation.Valid;
+-
++import br.com.hourjob.controller.form.LoginForm;
++import br.com.hourjob.dto.TokenDto;
++import br.com.hourjob.service.TokenService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+@@ -13,13 +14,13 @@
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
+ 
+-import br.com.hourjob.controller.form.LoginForm;
+-import br.com.hourjob.dto.TokenDto;
+-import br.com.hourjob.service.TokenService;
++import javax.validation.Valid;
+ 
+ @RestController
+-@RequestMapping("auth")
++@RequestMapping("/auth")
+ public class AutenticacaoController {
+ 	
+ 	@Autowired
+@@ -44,4 +45,9 @@
+ 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+ 		}
+ 	}
++
++	@GetMapping("/encrypt/{pass}")
++	public String getEncrypt(@PathVariable(name = "pass") String pass) {
++		return tokenService.getEncrypt(pass);
++	}
+ }
+Index: src/main/java/br/com/hourjob/HourjobApplication.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/HourjobApplication.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/HourjobApplication.java	(date 1590491009201)
+@@ -2,8 +2,13 @@
+ 
+ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
++import org.springframework.data.web.config.EnableSpringDataWebSupport;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RestController;
++
+ 
+ @SpringBootApplication
++@EnableSpringDataWebSupport
+ public class HourjobApplication {
+ 
+ 	public static void main(String[] args) {
+@@ -11,3 +16,11 @@
+ 	}
+ 
+ }
++
++@RestController
++class Hello {
++  @GetMapping("/")
++	String hello() {
++      return "Hello";
++    }
++    }
+Index: src/main/java/br/com/hourjob/model/LoginEmpregador.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/LoginEmpregador.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/model/LoginEmpregador.java	(date 1589974956948)
+@@ -1,23 +1,80 @@
+ package br.com.hourjob.model;
+ 
++import lombok.Data;
++import org.springframework.security.core.GrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++
++import javax.persistence.*;
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.List;
++
+ import javax.persistence.Entity;
+-import javax.persistence.GeneratedValue;
+-import javax.persistence.GenerationType;
+-import javax.persistence.Id;
+-import javax.persistence.JoinColumn;
+-import javax.persistence.OneToOne;
++  import javax.persistence.GeneratedValue;
++  import javax.persistence.GenerationType;
++  import javax.persistence.Id;
++  import javax.persistence.JoinColumn;
++  import javax.persistence.OneToOne;
++  import java.util.ArrayList;
++  import java.util.List;
++  import javax.persistence.FetchType;
++  import javax.persistence.ManyToMany;
++
++  import org.springframework.security.core.GrantedAuthority;
++  import org.springframework.security.core.userdetails.UserDetails;
+ 
+-import lombok.Data;
++  import lombok.Data;
+ 
+ @Entity
+-@Data
+-public class LoginEmpregador {
+-	
+-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+-	private long id;
+-	
+-	@OneToOne @JoinColumn(unique = true)
+-	private Empregador empregador;
+-	private String senha;
+-	
++public class LoginEmpregador implements UserDetails {
++
++  /**
++   *
++   */
++  private static final long serialVersionUID = -5609483637134073314L;
++
++  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
++  private long id;
++
++  @OneToOne @JoinColumn(unique = true)
++  private Empregador empregador;
++  private String senha;
++
++  @ManyToMany(fetch = FetchType.EAGER)
++  private List<Perfil> perfis = new ArrayList<>();
++
++  @Override
++  public Collection<? extends GrantedAuthority> getAuthorities() {
++    // TODO Auto-generated method stub
++    return perfis;
++
++  }
++  @Override
++  public String getPassword() {
++    return this.senha;
++  }
++  @Override
++  public String getUsername() {
++    return this.empregador.getEmail();
++  }
++  @Override
++  public boolean isAccountNonExpired() {
++    return true;
++  }
++  @Override
++  public boolean isAccountNonLocked() {
++    return true;
++  }
++  @Override
++  public boolean isCredentialsNonExpired() {
++    return true;
++  }
++  @Override
++  public boolean isEnabled() {
++    return true;
++  }
++  public long getId() {
++    return this.id;
++  }
++
+ }
+Index: src/main/resources/application.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/application.yml	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/resources/application.yml	(date 1590455739247)
+@@ -1,13 +1,16 @@
+ # datasource
+-spring:
+-  datasource:
+-   url: jdbc:postgresql://localhost:5432/hourjob
+-   username: postgres
+-   password: root
+-  jpa:
+-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+-    hibernate:
+-      ddl-auto: update
+-jwt:
+-  expiration: 3600
+-  secret:  xxxx
++#spring:
++#  datasource:
++     # url: jdbc:postgresql://localhost:5432/hourjob
++     # url: jdbc:postgresql://google/hourjob?cloudSqlInstance=hourjob:us-east1:hourjob&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=postgres&password=root
++#     username: postgres
++ #    password: root
++#  jpa:
++#    database-platform: org.hibernate.dialect.PostgreSQLDialect
++#    hibernate:
++#      ddl-auto: update
++#jwt:
++#  expiration: 3600
++#  secret:  xxxx
++
++
+Index: src/main/java/br/com/hourjob/repository/LoginCandidatoRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/repository/LoginCandidatoRepository.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/repository/LoginCandidatoRepository.java	(date 1589849796471)
+@@ -1,14 +1,14 @@
+ package br.com.hourjob.repository;
+ 
+-import java.util.Optional;
+-
+-import org.springframework.data.jpa.repository.JpaRepository;
+-
++import br.com.hourjob.model.Candidato;
+ import br.com.hourjob.model.LoginCandidato;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++import java.util.Optional;
+ 
+ 
+ public interface LoginCandidatoRepository  extends JpaRepository<LoginCandidato, Long> {
+ 
+-	Optional<LoginCandidato> findByCandidato(long id);
++	Optional<LoginCandidato> findByCandidato(Candidato candidato);
+ 	
+ }
+Index: src/main/java/br/com/hourjob/model/Empregador.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/Empregador.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/model/Empregador.java	(date 1590327280270)
+@@ -1,16 +1,16 @@
+ package br.com.hourjob.model;
+ 
++import lombok.Data;
++
+ import javax.persistence.Entity;
+ import javax.persistence.GeneratedValue;
+ import javax.persistence.GenerationType;
+ import javax.persistence.Id;
+ 
+-import lombok.Data;
+-
+ @Entity
+ @Data
+ public class Empregador {
+-	
++
+ 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+ 	private long id;
+ 	private String cnpj;
+@@ -24,4 +24,50 @@
+ 	private String atividade;
+ 	private double pontuacao;
+ 
++
++  public long getId() {
++    return this.id;
++  }
++
++  public String getCep() {
++    return this.cep;
++  }
++
++  public String getNome() {
++    return this.nome;
++  }
++
++  public String getEmail() {
++    return this.email;
++  }
++
++  public void setPontuacao(int nota) {
++  }
++
++  public void setAtividade(String atividade) {
++  }
++
++  public void setCep(String cep) {
++  }
++
++  public void setCnpj(String cnpj) {
++  }
++
++  public void setCpfResponsavel(String cpfResponsavel) {
++  }
++
++  public void setEmail(String email) {
++  }
++
++  public void setFuncResponsavel(String funcResponsavel) {
++  }
++
++  public void setPorteEmpresa(String porteEmpresa) {
++  }
++
++  public void setNome(String nome) {
++  }
++
++  public void setTelefone(String telefone) {
++  }
+ }
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ pom.xml	(date 1590488295528)
+@@ -1,25 +1,45 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project xmlns="http://maven.apache.org/POM/4.0.0"
+-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+-	<modelVersion>4.0.0</modelVersion>
+-	<parent>
+-		<groupId>org.springframework.boot</groupId>
+-		<artifactId>spring-boot-starter-parent</artifactId>
+-		<version>2.2.6.RELEASE</version>
+-		<relativePath /> <!-- lookup parent from repository -->
+-	</parent>
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
++  <modelVersion>4.0.0</modelVersion>
++  <parent>
++    <groupId>org.springframework.boot</groupId>
++    <artifactId>spring-boot-starter-parent</artifactId>
++    <version>2.2.6.RELEASE</version>
++    <relativePath /> <!-- lookup parent from repository -->
++  </parent>
++
+ 	<groupId>br.com</groupId>
+ 	<artifactId>hourjob</artifactId>
+ 	<version>0.0.1-SNAPSHOT</version>
+ 	<name>hourjob</name>
+ 	<description>Back-end hourJob</description>
+ 
++
++
+ 	<properties>
+ 		<java.version>1.8</java.version>
++    <maven.compiler.source>1.8</maven.compiler.source>
++    <maven.compiler.target>1.8</maven.compiler.target>
+ 	</properties>
+ 
++
++
+ 	<dependencies>
++
++    <dependency>
++      <groupId>com.google.cloud.sql</groupId>
++      <artifactId>postgres-socket-factory</artifactId>
++      <version>1.0.4</version>
++    </dependency>
++
++    <dependency>
++      <groupId>com.google.cloud</groupId>
++      <artifactId>google-cloud-storage</artifactId>
++      <version>1.22.0</version>
++    </dependency>
++
+ 		<dependency>
+ 			<groupId>org.springframework.boot</groupId>
+ 			<artifactId>spring-boot-starter-data-jpa</artifactId>
+@@ -59,15 +79,92 @@
+ 			<groupId>org.springframework.boot</groupId>
+ 			<artifactId>spring-boot-starter-security</artifactId>
+ 		</dependency>
+-	</dependencies>
++
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-swagger2</artifactId>
++			<version>2.9.2</version>
++		</dependency>
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-swagger-ui</artifactId>
++			<version>2.9.2</version>
++		</dependency>
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-spring-web</artifactId>
++			<version>2.9.2</version>
++		</dependency>
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-core</artifactId>
++			<version>2.9.2</version>
++		</dependency>
++
++    <dependency>
++      <groupId>com.google.cloud.tools</groupId>
++      <artifactId>appengine-maven-plugin</artifactId>
++      <version>2.2.0</version>
++    </dependency>
++
++
++
++  </dependencies>
+ 
+ 	<build>
+-		<plugins>
++    <plugins>
+ 			<plugin>
+ 				<groupId>org.springframework.boot</groupId>
+ 				<artifactId>spring-boot-maven-plugin</artifactId>
+ 			</plugin>
+-		</plugins>
++
++      <plugin>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-maven-plugin</artifactId>
++        <version>9.4.29.v20200521</version>
++      </plugin>
++
++      <plugin>
++        <groupId>com.google.appengine</groupId>
++        <artifactId>appengine-maven-plugin</artifactId>
++        <version>1.9.80</version>
++      </plugin>
++
++      <plugin>
++        <groupId>com.google.cloud.tools</groupId>
++        <artifactId>appengine-maven-plugin</artifactId>
++        <version>2.2.0</version>
++        <configuration>
++          <deploy.projectId>GCLOUD_CONFIG</deploy.projectId>
++          <deploy.version>GCLOUD_CONFIG</deploy.version>
++        </configuration>
++      </plugin>
++
++      <plugin>
++        <groupId>org.apache.maven.plugins</groupId>
++        <artifactId>maven-assembly-plugin</artifactId>
++        <version>2.4.1</version>
++        <configuration>
++          <descriptorRefs>
++            <descriptorRef>jar-with-dependencies</descriptorRef>
++          </descriptorRefs>
++        </configuration>
++        <executions>
++          <execution>
++            <id>create-assembly</id>
++            <phase>package</phase>
++            <goals>
++              <goal>single</goal>
++            </goals>
++          </execution>
++        </executions>
++      </plugin>
++
++    </plugins>
++
++
++
++
+ 	</build>
+ 
+ </project>
+Index: src/main/java/br/com/hourjob/model/RequisitosVaga.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/RequisitosVaga.java	(date 1590155130935)
++++ src/main/java/br/com/hourjob/model/RequisitosVaga.java	(date 1590155130935)
+@@ -0,0 +1,20 @@
++package br.com.hourjob.model;
++
++import javax.persistence.*;
++
++@Entity
++public class RequisitosVaga {
++
++  @Id
++  @GeneratedValue(strategy = GenerationType.IDENTITY)
++  private long id;
++  @ManyToOne
++  private Candidato candidato;
++  @OneToOne
++  private Vaga vaga;
++  private String escolaridade;
++  private String experiencias;
++  private String habilidades;
++
++}
++
+Index: src/main/java/br/com/hourjob/model/Vaga.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/Vaga.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/model/Vaga.java	(date 1590326905277)
+@@ -1,27 +1,20 @@
+ package br.com.hourjob.model;
+ 
++import lombok.Data;
++
++import javax.persistence.*;
+ import java.math.BigDecimal;
+ import java.util.Date;
+ 
+-import javax.persistence.Entity;
+-import javax.persistence.EnumType;
+-import javax.persistence.Enumerated;
+-import javax.persistence.GeneratedValue;
+-import javax.persistence.GenerationType;
+-import javax.persistence.Id;
+-import javax.persistence.ManyToOne;
+-
+-import lombok.Data;
+-
+ @Entity
+ @Data
+ public class Vaga {
+-	
++
+ 	public Vaga() {}
+-	
++
+ 	public Vaga( Empregador empregador, boolean perfilDaVaga, int periodo,
+ 			BigDecimal remuneracao, StatusVagaEnum status, Date data) {
+-		
++
+ 		this.data = data;
+ 		this.empregador = empregador;
+ 		this.perfilDaVaga = perfilDaVaga;
+@@ -29,7 +22,7 @@
+ 		this.remuneracao = remuneracao;
+ 		this.status = status;
+ 	}
+-	
++
+ 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+ 	private long id;
+ 	@ManyToOne
+@@ -42,5 +35,20 @@
+ 	@Enumerated(EnumType.STRING)
+ 	private StatusVagaEnum status;
+ 	private Date data;
+-	
++
++  public long getId() {
++    return this.id;
++  }
++
++  public int getPeriodo() {
++    return this.periodo;
++  }
++
++  public BigDecimal getRemuneracao() {
++    return this.remuneracao;
++  }
++
++  public StatusVagaEnum getStatus() {
++    return this.status;
++  }
+ }
+Index: src/main/java/br/com/hourjob/model/Candidato.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/br/com/hourjob/model/Candidato.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ src/main/java/br/com/hourjob/model/Candidato.java	(date 1590327280300)
+@@ -1,23 +1,17 @@
+ package br.com.hourjob.model;
+ 
++import lombok.Data;
++
++import javax.persistence.*;
+ import java.util.Date;
+ import java.util.List;
+ 
+-import javax.persistence.Entity;
+-import javax.persistence.GeneratedValue;
+-import javax.persistence.GenerationType;
+-import javax.persistence.Id;
+-import javax.persistence.Lob;
+-import javax.persistence.OneToMany;
+-
+-import lombok.Data;
+-
+ @Entity
+ @Data
+ public class Candidato {
+-	
++
+ 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+-	private long id; 
++	private long id;
+ 	private String cpf;
+ 	private String nome;
+ 	private String telefone;
+@@ -35,4 +29,43 @@
+ 	@OneToMany
+ 	private List<ServicosPrestados> servicosPrestados;
+ 
++  public Long getId() {
++    return this.id;
++  }
++
++  public String getCep() {
++    return this.cep;
++  }
++
++  public String getNome() {
++    return this.nome;
++  }
++
++  public String getEmail() {
++    return this.email;
++  }
++
++  public void setPontuacao(int nota) {
++  }
++
++  public void setCpf(String cpf) {
++  }
++
++  public void setNome(String nome) {
++  }
++
++  public void setCep(String cep) {
++  }
++
++  public void setNomeDaMae(String nomeMae) {
++  }
++
++  public void setEmail(String email) {
++  }
++
++  public void setDataDeNascimento(Date dataNascimento) {
++  }
++
++  public void setTelefone(String telefone) {
++  }
+ }
+Index: .mvn/wrapper/MavenWrapperDownloader.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .mvn/wrapper/MavenWrapperDownloader.java	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ .mvn/wrapper/MavenWrapperDownloader.java	(date 1590361785051)
+@@ -5,7 +5,7 @@
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- *      https://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+Index: mvnw
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- mvnw	(revision 90e67a21da8ace187fc567c7b300877ca4ca312d)
++++ mvnw	(date 1590361785041)
+@@ -8,7 +8,7 @@
+ # "License"); you may not use this file except in compliance
+ # with the License.  You may obtain a copy of the License at
+ #
+-#    https://www.apache.org/licenses/LICENSE-2.0
++#    http://www.apache.org/licenses/LICENSE-2.0
+ #
+ # Unless required by applicable law or agreed to in writing,
+ # software distributed under the License is distributed on an
