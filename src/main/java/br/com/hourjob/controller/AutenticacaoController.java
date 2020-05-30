@@ -19,7 +19,7 @@ import br.com.hourjob.dto.TokenDto;
 import br.com.hourjob.service.TokenService;
 
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/auth")
 public class AutenticacaoController {
 
 	@Autowired
@@ -44,4 +44,8 @@ public class AutenticacaoController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 	}
+	@GetMapping("/encrypt/{pass}")
+  	public String getEncrypt(@PathVariable(name = "pass") String pass) {
+    	return tokenService.getEncrypt(pass);
+  	}
 }
